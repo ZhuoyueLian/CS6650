@@ -1,0 +1,21 @@
+Analysis of Results:
+Distribution Shape:
+The histogram clearly shows the "long tail" distribution:
+- 938 total requests in 30 seconds
+- Most requests (900+) completed between 28-35ms (very fast)
+- Few outliers took much longer, with one extreme case at 627.36ms
+
+Key Statistics Analysis:
+- Average (31.96ms) vs Median (30.11ms): Very close, indicating consistent performance
+- 95th percentile (35.15ms): Still quite good, only 5ms above median
+- 99th percentile (51.65ms): Shows some variability in the slowest 1%
+- Maximum (627.36ms): One significant outlier (Request #570)
+
+Answers to the Assignment Questions:
+1. Distribution Shape: The histogram shows a very tight distribution rather than a classic long tail. Only about 1% of requests were "slow" (>50ms).
+2. Consistency: Response times were remarkably consistent throughout the 30-second window. The scatter plot shows most requests clustered around 30ms with occasional spikes.
+3. Percentiles: The gap between median (30.11ms) and 95th percentile (35.15ms) is only 5ms - indicating low variability. This suggests that the EC2 instance performed very consistently.
+4. Infrastructure Impact: The t2.micro instance handled sequential requests very well. The single extreme outlier (627ms) likely represents a network congestion event rather than server overload.
+5. Scaling Implications: With 100 concurrent users, I'd likely see more variability and higher average response times due to CPU/memory contention on the single t2.micro instance.
+6. Network vs Processing: The consistency of most requests (~30ms) suggests stable processing time. The few outliers (163ms, 627ms) are likely network latency spikes rather than server processing delays.
+The results show that for lightweight API operations like JSON serialization, a basic EC2 instance can handle sequential requests quite effectively. The real challenges emerge under concurrent load or with more complex processing requirements.
