@@ -15,8 +15,8 @@ provider "aws" {
   region     = "us-west-2" # Which region you are working on
 }
 
-# Your ec2 instance
-resource "aws_instance" "demo-instance" {
+# Your first ec2 instance
+resource "aws_instance" "demo-instance-1" {
   ami                    = data.aws_ami.al2023.id
   instance_type          = "t2.micro"
   iam_instance_profile   = "LabInstanceProfile"
@@ -24,7 +24,20 @@ resource "aws_instance" "demo-instance" {
   key_name               = var.ssh_key_name
 
   tags = {
-    Name = "terraform-created-instance-:)"
+    Name = "terraform-instance-1"
+  }
+}
+
+# Your second ec2 instance
+resource "aws_instance" "demo-instance-2" {
+  ami                    = data.aws_ami.al2023.id
+  instance_type          = "t2.micro"
+  iam_instance_profile   = "LabInstanceProfile"
+  vpc_security_group_ids = [aws_security_group.ssh.id]
+  key_name               = var.ssh_key_name
+
+  tags = {
+    Name = "terraform-instance-2"
   }
 }
 
@@ -33,6 +46,7 @@ resource "aws_instance" "demo-instance" {
 resource "aws_security_group" "ssh" {
   name        = "allow_ssh_from_me"
   description = "SSH from a single IP"
+  
   ingress {
     description = "SSH"
     from_port   = 22
@@ -40,6 +54,16 @@ resource "aws_security_group" "ssh" {
     protocol    = "tcp"
     cidr_blocks = [var.ssh_cidr]
   }
+  
+  # Add HTTP access on port 8080
+  ingress {
+    description = "HTTP"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
   egress {
     from_port   = 0
     to_port     = 0
@@ -58,6 +82,10 @@ data "aws_ami" "al2023" {
   }
 }
 
-output "ec2_public_dns" {
-  value = aws_instance.demo-instance.public_dns
+output "ec2_public_dns_1" {
+  value = aws_instance.demo-instance-1.public_dns
+}
+
+output "ec2_public_dns_2" {
+  value = aws_instance.demo-instance-2.public_dns
 }
