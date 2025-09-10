@@ -1,0 +1,7 @@
+The Terraform configuration defines:
+
+Provider: Specifies AWS as the cloud provider in the us-west-2 region
+EC2 Instance: Creates a t2.micro instance using the latest Amazon Linux 2023 AMI
+Security Group: Creates firewall rules allowing SSH access only from your IP address
+Data Source: Finds the most recent Amazon Linux 2023 AMI automatically
+Output: Displays the public DNS name of your instance after creation
