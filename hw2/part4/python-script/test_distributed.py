@@ -1,8 +1,8 @@
 import requests
 
 # Correct IP addresses for both instances
-EC2_URL1 = "http://ec2-35-87-123-83.us-west-2.compute.amazonaws.com:8080/albums"
-EC2_URL2 = "http://ec2-44-244-216-185.us-west-2.compute.amazonaws.com:8080/albums"
+EC2_URL1 = "http://44.237.100.221:8080/albums"
+EC2_URL2 = "http://44.253.50.140:8080/albums"
 
 POST_DATA = {
     "id": "4",
