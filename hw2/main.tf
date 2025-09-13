@@ -41,7 +41,27 @@ resource "aws_instance" "demo-instance-2" {
   }
 }
 
-# Your security that grants ssh access from 
+# Elastic IP for instance 1
+resource "aws_eip" "instance_1_eip" {
+  instance = aws_instance.demo-instance-1.id
+  domain   = "vpc"
+  
+  tags = {
+    Name = "terraform-instance-1-eip"
+  }
+}
+
+# Elastic IP for instance 2
+resource "aws_eip" "instance_2_eip" {
+  instance = aws_instance.demo-instance-2.id
+  domain   = "vpc"
+  
+  tags = {
+    Name = "terraform-instance-2-eip"
+  }
+}
+
+# Your security group that grants ssh access from 
 # your ip address to your ec2 instance
 resource "aws_security_group" "ssh" {
   name        = "allow_ssh_from_me"
@@ -82,10 +102,18 @@ data "aws_ami" "al2023" {
   }
 }
 
-output "ec2_public_dns_1" {
-  value = aws_instance.demo-instance-1.public_dns
+output "ec2_public_ip_1" {
+  value = aws_eip.instance_1_eip.public_ip
 }
 
-output "ec2_public_dns_2" {
-  value = aws_instance.demo-instance-2.public_dns
+output "ec2_public_ip_2" {
+  value = aws_eip.instance_2_eip.public_ip
+}
+
+output "ssh_command_1" {
+  value = "ssh -i /Users/zhuoyuelian/Downloads/cs6650hw1.pem ec2-user@${aws_eip.instance_1_eip.public_ip}"
+}
+
+output "ssh_command_2" {
+  value = "ssh -i /Users/zhuoyuelian/Downloads/cs6650hw1.pem ec2-user@${aws_eip.instance_2_eip.public_ip}"
 }
