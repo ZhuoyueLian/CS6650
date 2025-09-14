@@ -1,0 +1,12 @@
+Each container maintains independent in-memory state. When you POST to Instance 2, only that container's memory is updated. Instance 1 never learns about this change because:
+- No shared database - Data lives only in each container's memory
+- No inter-service communication - Containers can't talk to each other
+- Stateless by design - Each request is handled independently
+
+This demonstrates why real distributed systems need:
+- Shared databases (PostgreSQL, Redis)
+- Message queues (RabbitMQ, Kafka)
+- API gateways with session affinity
+- Event sourcing patterns
+
+This reveals that scaling by adding more servers creates data consistency challenges that require architectural solutions beyond just running multiple instances.
