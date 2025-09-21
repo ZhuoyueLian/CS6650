@@ -24,9 +24,9 @@ This report presents experimental results from distributed systems concepts incl
 - **Race Detection:** Go's `-race` flag identified concurrent access violations
 
 **Screenshots:** 
-![Atomicity Results - Without Race Detection](part2/atomicity/screenshots/WithoutRaceDetection.png "Atomicity Results - Without Race Detection")
+![Atomicity Results - Without Race Detection](part2/atomicity/screenshots/WithoutRaceDetection.png "Atomic vs Regular Counter Performance Comparison")
 
-![Atomicity Results - With Race Detection](part2/atomicity/screenshots/WithRaceDetection.png "Atomicity Results - With Race Detection")
+![Atomicity Results - With Race Detection](part2/atomicity/screenshots/WithRaceDetection.png "Race Detection Output Showing Concurrent Access Violations")
 
 **Key Findings:**
 - Atomic operations guarantee consistency but at performance cost
@@ -49,9 +49,9 @@ This report presents experimental results from distributed systems concepts incl
 | Plain Map | N/A | N/A | Crashed |
 
 **Screenshots:** 
-![Collections Results - Plain Map Crash](part2/collections/screenshots/PlainMapCrash.png "Plain Map Crash Under Concurrent Access")
+- ![Collections Results - Plain Map Crash](part2/collections/screenshots/PlainMapCrash.png "Plain Map Crash Under Concurrent Access")
 
-![Collections Results - Synchronized Approaches](part2/collections/screenshots/SynchronizedApproaches.png "Performance Comparison of Synchronized Map Approaches")
+- ![Collections Results - Synchronized Approaches](part2/collections/screenshots/SynchronizedApproaches.png "Performance Comparison of Synchronized Map Approaches")
 
 **Key Findings:**
 - Plain maps crash under concurrent write access
@@ -69,7 +69,8 @@ This report presents experimental results from distributed systems concepts incl
 - **Unbuffered I/O:** 547.97ms average (high variability)
 - **Buffered I/O:** 47.94ms average (11.43x faster, 91.3% improvement)
 
-**Screenshot:** [File Access Performance Results]
+**Screenshot:** 
+![Buffered vs Unbuffered I/O Performance](part2/file-access/screenshots/FileAccessResults.png "File I/O Performance Comparison")
 
 **Key Findings:**
 - Buffered I/O provides dramatic performance improvements by reducing system calls
@@ -86,7 +87,8 @@ This report presents experimental results from distributed systems concepts incl
 - **Single-threaded:** 295ns per context switch (faster)
 - **Multi-threaded:** 328ns per context switch (9.9% slower)
 
-**Screenshot:** [Context Switching Results]
+**Screenshot:** 
+![Single vs Multi-threaded goroutine switching performance](part2/context-switching/screenshots/ContextSwitchingResults.png "Context switching time comparison between execution modes")
 
 **Key Findings:**
 - User-space goroutine switching outperforms OS thread coordination
@@ -113,11 +115,16 @@ This report presents experimental results from distributed systems concepts incl
 | FastHttpUser, 4 Workers | 4 | 5,194 | 33.0 | 13.88ms | 2.03ms |
 
 **Screenshots:** 
-- [1 Worker, 1 User Statistics]
-- [1 Worker, 50 Users Statistics] 
-- [4 Workers, 1 User Statistics]
-- [4 Workers, 50 Users Statistics]
-- [FastHttpUser Results]
+**Screenshots:** 
+- ![Load test results: 1 worker with 1 user](part3/screenshots/stats-1worker-1user.png "1 Worker, 1 User Performance Statistics")
+
+- ![Load test results: 1 worker with 50 users](part3/screenshots/stats-1worker-50users.png "1 Worker, 50 Users Performance Statistics") 
+
+- ![Load test results: 4 workers with 1 user](part3/screenshots/stats-4workers-1user.png "4 Workers, 1 User Performance Statistics")
+
+- ![Load test results: 4 workers with 50 users](part3/screenshots/stats-4workers-50users.png "4 Workers, 50 Users Performance Statistics")
+
+- ![Load test results using FastHttpUser](part3/screenshots/stats-fasthttpuser-4workers-50users.png "FastHttpUser Performance Statistics")
 
 ### Analysis: GET vs POST Performance
 
