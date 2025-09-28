@@ -1,0 +1,22 @@
+{
+  "family": "mapper-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::767397760709:role/LabRole",
+  "taskRoleArn": "arn:aws:iam::767397760709:role/LabRole",
+  "containerDefinitions": [
+    {
+      "name": "mapper-container",
+      "image": "767397760709.dkr.ecr.us-west-2.amazonaws.com/mapper-service:latest",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true
+    }
+  ]
+}
