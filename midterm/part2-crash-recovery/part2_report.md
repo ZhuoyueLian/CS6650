@@ -59,8 +59,11 @@ router.POST("/products/analyze/:id", func(c *gin.Context) {
 - Leak rate: ~1,100 MB/second
 - Leaked chunks: 19,272
 
-*Screenshot: `buggy_local_test_memory_leak_4gb.png`*  
-*Screenshot: `buggy_local_test_continuous_memory_growth.png`*
+![Local test showing 4GB memory leak](screenshots/buggy_local_test_memory_leak_4gb.png)
+*Figure: Memory usage grew from 1 MB to 4,301 MB after just 10 requests*
+
+![Continuous memory growth over 86 seconds](screenshots/buggy_local_test_continuous_memory_growth.png)
+*Figure: Memory escalated to 96,257 MB with a leak rate of ~1,100 MB/second*
 
 ### AWS ECS Deployment Results
 
@@ -91,9 +94,14 @@ router.POST("/products/analyze/:id", func(c *gin.Context) {
 - **ECS behavior:** Automatically restarted crashed tasks
 - **User impact:** Request failures, service degradation
 
-*Screenshot: `buggy_aws_memory_leak_and_crash.png`*  
-*Screenshot: `buggy_locust_failures.png`*  
-*Screenshot: `buggy_ecs_task_oom_killed.png`*
+![AWS ECS memory leak leading to crash](screenshots/buggy_aws_memory_leak_and_crash.png)
+*Figure: Memory grew from 431 MB to over 24,000 MB before the container was killed*
+
+![Locust load test showing request failures](screenshots/buggy_locust_failures.png)
+*Figure: 502 Bad Gateway errors as ECS tasks crashed under load*
+
+![ECS task terminated with OOM error](screenshots/buggy_ecs_task_oom_killed.png)
+*Figure: Exit code 137 - Container killed due to memory usage exceeding 512 MB limit*
 
 ---
 
@@ -202,8 +210,11 @@ This fix implements the **fail-fast** pattern combined with **bulkhead isolation
 - Task restarts: 0
 - **Result:** 100% availability maintained
 
-*Screenshot: `fixed_aws_stable_metrics.png`*  
-*Screenshot: `fixed_locust_stable_no_failures.png`*
+![Fixed version showing stable metrics](screenshots/fixed_aws_stable_metrics.png)
+*Figure: Memory remains stable at 1-3 MB, goroutines bounded at 79-99 throughout the test*
+
+![Fixed version with zero failures under load](screenshots/fixed_locust_stable_no_failures.png)
+*Figure: 100% success rate with 0 errors during continuous load testing*
 
 ### Performance Comparison
 
@@ -291,9 +302,16 @@ The fail-fast pattern implemented in the fix exemplifies good distributed system
 - Infrastructure: `midterm/part2-crash-recovery/terraform/`
 
 **Screenshots:**
-- Local testing: `buggy_local_test_memory_leak_4gb.png`, `buggy_local_test_continuous_memory_growth.png`
-- AWS buggy version: `buggy_aws_memory_leak_and_crash.png`, `buggy_locust_failures.png`, `buggy_ecs_task_oom_killed.png`
-- AWS fixed version: `fixed_aws_stable_metrics.png`, `fixed_locust_statistics.png`
+- Local testing: Located in `screenshots/` directory
+  - `buggy_local_test_memory_leak_4gb.png` - Initial memory leak demonstration
+  - `buggy_local_test_continuous_memory_growth.png` - Continuous growth over 86 seconds
+- AWS buggy version:
+  - `buggy_aws_memory_leak_and_crash.png` - Memory exhaustion timeline
+  - `buggy_locust_failures.png` - Load test failure results
+  - `buggy_ecs_task_oom_killed.png` - ECS OOM kill event
+- AWS fixed version:
+  - `fixed_aws_stable_metrics.png` - Stable operation metrics
+  - `fixed_locust_stable_no_failures.png` - Zero-failure load test results
 
 **Failure Handling Patterns Referenced:**
 - Fail-fast (Sam Newman, Building Microservices)
