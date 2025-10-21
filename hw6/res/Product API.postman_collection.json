@@ -1,0 +1,140 @@
+{
+	"info": {
+		"_postman_id": "75708c47-e79d-4e2a-8f8b-0b7cdf2b92cd",
+		"name": "Product API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42667955"
+	},
+	"item": [
+		{
+			"name": "http://44.247.77.9:8080/products/999",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/products/123",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"products",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://44.247.77.9:8080/products/abc",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/products/abc",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"products",
+						"abc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://44.247.77.9:8080/products/123/details",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "",
+						"description": " application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"product_id\": 123,\n  \"sku\": \"POSTMAN-TEST\",\n  \"manufacturer\": \"Test Corp\",\n  \"category_id\": 5,\n  \"weight\": 750,\n  \"some_other_id\": 888\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/products/123/details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"products",
+						"123",
+						"details"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://44.247.77.9:8080/products/123",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/products/123",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"products",
+						"123"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://44.247.77.9:8080",
+			"type": "string"
+		}
+	]
+}
