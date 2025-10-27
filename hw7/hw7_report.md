@@ -178,7 +178,7 @@ Customers receive order acceptance immediately, but payment processing is delaye
 
 ![Queue Draining](screenshots/phase5_queue_draining_3000_remaining.png)
 
-**Key Observation:** The queue visibly drains from 5,700 messages down to near-zero within minutes, demonstrating that proper worker scaling matches the incoming request rate.
+**Key Observation:** The queue visibly drains from 5,700 messages down to ~2,800 messages within 15 minutes with 20 workers. This demonstrates that worker scaling significantly improves processing speed (from 3+ hours with 1 worker to ~20-25 minutes total drain time with 20 workers), though the queue still accumulates faster than workers can process during the burst.
 
 ---
 
