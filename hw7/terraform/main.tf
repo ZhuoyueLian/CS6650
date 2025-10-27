@@ -69,7 +69,7 @@ module "ecs" {
   # Messaging configuration
   sns_topic_arn      = module.messaging.sns_topic_arn
   sqs_queue_url      = module.messaging.sqs_queue_url
-  num_workers        = 20  # Scale to 20 workers!
+  num_workers        = 5
   
   # Auto Scaling configuration
   enable_autoscaling = true
