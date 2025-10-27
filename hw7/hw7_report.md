@@ -10,6 +10,15 @@ This report demonstrates the critical differences between synchronous and asynch
 - Worker scaling: 20x improvement in queue processing time
 - Lambda serverless: $0/month vs $17/month for ECS (for typical startup volumes)
 
+### Comparison: Synchronous vs Asynchronous Architecture
+
+| Metric | Synchronous (Phase 1) | Asynchronous (Phase 3) | Improvement |
+|--------|----------------------|------------------------|-------------|
+| Requests Completed | 20 orders | 3,707 orders | **185x more** |
+| Average Response Time | 30,000-59,000ms | 28ms | **1,071-2,107x faster** |
+| Throughput (RPS) | 0.4 RPS | 58.7 RPS | **147x increase** |
+| Customer Success Rate | 1.7% (20/1,200) | 100% (3,707/3,707) | **58x improvement** |
+
 ---
 
 ## Part II: The Synchronous Bottleneck Problem
