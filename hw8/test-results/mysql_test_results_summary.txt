@@ -1,0 +1,34 @@
+============================================================
+TEST RESULTS SUMMARY
+============================================================
+
+CREATE_CART:
+  Operations: 50
+  Success: 50/50
+  Avg Response Time: 46.35 ms
+  Min Response Time: 34.85 ms
+  Max Response Time: 170.69 ms
+
+ADD_ITEMS:
+  Operations: 50
+  Success: 50/50
+  Avg Response Time: 43.06 ms
+  Min Response Time: 37.30 ms
+  Max Response Time: 52.90 ms
+
+GET_CART:
+  Operations: 50
+  Success: 50/50
+  Avg Response Time: 40.91 ms
+  Min Response Time: 32.33 ms
+  Max Response Time: 131.92 ms
+
+OVERALL:
+  Total Operations: 150
+  Successful: 150 (100.0%)
+  Failed: 0
+  Overall Avg Response Time: 43.44 ms
+
+============================================================
+✓ Results saved to: test-results/mysql_test_results.json
+============================================================

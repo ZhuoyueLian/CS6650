@@ -1,0 +1,34 @@
+============================================================
+TEST RESULTS SUMMARY
+============================================================
+
+CREATE_CART:
+  Operations: 50
+  Success: 50/50
+  Avg Response Time: 40.11 ms
+  Min Response Time: 33.40 ms
+  Max Response Time: 84.13 ms
+
+ADD_ITEMS:
+  Operations: 50
+  Success: 50/50
+  Avg Response Time: 47.07 ms
+  Min Response Time: 35.07 ms
+  Max Response Time: 215.34 ms
+
+GET_CART:
+  Operations: 50
+  Success: 50/50
+  Avg Response Time: 37.34 ms
+  Min Response Time: 30.67 ms
+  Max Response Time: 83.53 ms
+
+OVERALL:
+  Total Operations: 150
+  Successful: 150 (100.0%)
+  Failed: 0
+  Overall Avg Response Time: 41.51 ms
+
+============================================================
+✓ Results saved to: test-results/dynamodb_test_results.json
+============================================================

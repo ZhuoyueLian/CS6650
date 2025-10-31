@@ -1,0 +1,84 @@
+{
+  "mysql": {
+    "database": "MySQL",
+    "total_operations": 150,
+    "successful_operations": 150,
+    "success_rate": 100.0,
+    "avg_response_time": 43.442,
+    "median_response_time": 40.665000000000006,
+    "p50": 40.63,
+    "p95": 53.09,
+    "p99": 117.74499999999999,
+    "min_response_time": 32.33,
+    "max_response_time": 170.69,
+    "operations": {
+      "create_cart": {
+        "count": 50,
+        "success_count": 50,
+        "avg": 46.35,
+        "min": 34.85,
+        "max": 170.69,
+        "median": 41.345
+      },
+      "add_items": {
+        "count": 50,
+        "success_count": 50,
+        "avg": 43.0616,
+        "min": 37.3,
+        "max": 52.9,
+        "median": 42.334999999999994
+      },
+      "get_cart": {
+        "count": 50,
+        "success_count": 50,
+        "avg": 40.9144,
+        "min": 32.33,
+        "max": 131.92,
+        "median": 37.085
+      }
+    }
+  },
+  "dynamodb": {
+    "database": "DynamoDB",
+    "total_operations": 150,
+    "successful_operations": 150,
+    "success_rate": 100.0,
+    "avg_response_time": 41.5084,
+    "median_response_time": 37.815,
+    "p50": 37.71,
+    "p95": 60.015,
+    "p99": 85.925,
+    "min_response_time": 30.67,
+    "max_response_time": 215.34,
+    "operations": {
+      "create_cart": {
+        "count": 50,
+        "success_count": 50,
+        "avg": 40.1104,
+        "min": 33.4,
+        "max": 84.13,
+        "median": 37.015
+      },
+      "add_items": {
+        "count": 50,
+        "success_count": 50,
+        "avg": 47.0732,
+        "min": 35.07,
+        "max": 215.34,
+        "median": 41.49
+      },
+      "get_cart": {
+        "count": 50,
+        "success_count": 50,
+        "avg": 37.3416,
+        "min": 30.67,
+        "max": 83.53,
+        "median": 34.765
+      }
+    }
+  },
+  "comparison": {
+    "overall_winner": "DynamoDB",
+    "performance_difference_pct": 4.450992127434277
+  }
+}

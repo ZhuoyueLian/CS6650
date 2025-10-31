@@ -1,0 +1,47 @@
+================================================================================
+PERFORMANCE COMPARISON: MySQL vs DynamoDB
+================================================================================
+
+================================================================================
+OVERALL METRICS
+================================================================================
+
+Metric                         MySQL           DynamoDB        Winner          Margin         
+------------------------------------------------------------------------------------------
+Avg Response Time (ms)         43.44           41.51           DynamoDB        4.5%           
+P50 Response Time (ms)         40.63           37.71           DynamoDB        7.2%           
+P95 Response Time (ms)         53.09           60.02           MySQL           13.0%          
+P99 Response Time (ms)         117.74          85.92           DynamoDB        27.0%          
+Min Response Time (ms)         32.33           30.67           DynamoDB        5.1%           
+Max Response Time (ms)         170.69          215.34          MySQL           26.2%          
+Success Rate (%)               100.00          100.00          Tie             0.00%          
+Total Operations               150.00          150.00          -               -              
+
+================================================================================
+OPERATION-SPECIFIC BREAKDOWN
+================================================================================
+
+CREATE CART:
+  Metric               MySQL           DynamoDB        Faster By      
+  -----------------------------------------------------------------
+  AVG                  46.35           40.11           DynamoDB (6.24ms)
+  MIN                  34.85           33.40           DynamoDB (1.45ms)
+  MAX                  170.69          84.13           DynamoDB (86.56ms)
+
+ADD ITEMS:
+  Metric               MySQL           DynamoDB        Faster By      
+  -----------------------------------------------------------------
+  AVG                  43.06           47.07           MySQL (4.01ms)
+  MIN                  37.30           35.07           DynamoDB (2.23ms)
+  MAX                  52.90           215.34          MySQL (162.44ms)
+
+GET CART:
+  Metric               MySQL           DynamoDB        Faster By      
+  -----------------------------------------------------------------
+  AVG                  40.91           37.34           DynamoDB (3.57ms)
+  MIN                  32.33           30.67           DynamoDB (1.66ms)
+  MAX                  131.92          83.53           DynamoDB (48.39ms)
+
+================================================================================
+
+✓ Detailed analysis saved to: docs/performance_analysis.json
