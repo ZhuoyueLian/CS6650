@@ -41,6 +41,12 @@ type AddItemRequest struct {
 	Price     float64 `json:"price" binding:"required,min=0"`
 }
 
+// UpdateItemRequest represents the request body for updating items
+type UpdateItemRequest struct {
+	Quantity int `json:"quantity" binding:"required,min=1"`
+}
+
+// Global database connection pool - shared across all requests
 var db *sql.DB
 
 func main() {
@@ -57,6 +63,7 @@ func main() {
 		log.Fatalf("Failed to initialize schema: %v", err)
 	}
 
+	// Set up HTTP router using Gin framework
 	router := gin.Default()
 
 	// Health check endpoint
@@ -66,6 +73,11 @@ func main() {
 	router.POST("/shopping-carts", createCart)
 	router.GET("/shopping-carts/:id", getCart)
 	router.POST("/shopping-carts/:id/items", addItems)
+
+	// Item management endpoints
+	router.PUT("/shopping-carts/:cart_id/items/:product_id", updateItem)
+	router.DELETE("/shopping-carts/:cart_id/items/:product_id", removeItem)
+	router.DELETE("/shopping-carts/:cart_id/items", clearCart)
 
 	router.Run(":8080")
 }
@@ -78,6 +90,23 @@ func initDB() (*sql.DB, error) {
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
+
+	// For local testing, use defaults if env vars not set
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+	if dbPort == "" {
+		dbPort = "3306"
+	}
+	if dbUser == "" {
+		dbUser = "root"
+	}
+	if dbPassword == "" {
+		dbPassword = "password"
+	}
+	if dbName == "" {
+		dbName = "shopping_cart"
+	}
 
 	// Construct DSN (Data Source Name)
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
@@ -127,7 +156,8 @@ func initSchema() error {
 		quantity INT NOT NULL,
 		price DECIMAL(10, 2) NOT NULL,
 		FOREIGN KEY (cart_id) REFERENCES carts(cart_id) ON DELETE CASCADE,
-		INDEX idx_cart_id (cart_id)
+		INDEX idx_cart_id (cart_id),
+		UNIQUE KEY unique_cart_product (cart_id, product_id)
 	) ENGINE=InnoDB;`
 
 	if _, err := db.Exec(createCartItemsTable); err != nil {
@@ -192,9 +222,9 @@ func createCart(c *gin.Context) {
 
 // getCart retrieves a cart with all its items
 func getCart(c *gin.Context) {
-	cartID := c.Param("id")
+	cartID := parseID(c.Param("id"))
 
-	cart, err := fetchCartByID(parseID(cartID))
+	cart, err := fetchCartByID(cartID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
@@ -224,6 +254,7 @@ func addItems(c *gin.Context) {
 		return
 	}
 
+	// Parse and validate the item data from request body
 	var req AddItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
@@ -231,6 +262,8 @@ func addItems(c *gin.Context) {
 	}
 
 	// Insert or update cart item
+	// ON DUPLICATE KEY UPDATE handles the case where product already exists in cart
+	// The UNIQUE constraint on (cart_id, product_id) triggers this behavior
 	_, err = db.Exec(`
 		INSERT INTO cart_items (cart_id, product_id, quantity, price)
 		VALUES (?, ?, ?, ?)
@@ -255,20 +288,174 @@ func addItems(c *gin.Context) {
 	c.JSON(http.StatusOK, cart)
 }
 
+// updateItem updates the quantity of a specific item in a cart
+func updateItem(c *gin.Context) {
+	cartID := parseID(c.Param("cart_id"))
+	productID := c.Param("product_id")
+
+	// Verify cart exists
+	exists, err := cartExists(cartID)
+	if err != nil {
+		log.Printf("Error checking cart existence: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify cart"})
+		return
+	}
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+		return
+	}
+
+	// Parse new quantity from request body
+	var req UpdateItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	// Update item quantity
+	result, err := db.Exec(`
+		UPDATE cart_items 
+		SET quantity = ? 
+		WHERE cart_id = ? AND product_id = ?`,
+		req.Quantity, cartID, productID,
+	)
+	if err != nil {
+		log.Printf("Error updating item: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update item"})
+		return
+	}
+
+	// Check if item was found and updated
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error checking rows affected: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify update"})
+		return
+	}
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "item not found in cart"})
+		return
+	}
+
+	// Fetch updated cart
+	cart, err := fetchCartByID(cartID)
+	if err != nil {
+		log.Printf("Error fetching updated cart: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "item updated but failed to retrieve cart"})
+		return
+	}
+
+	c.JSON(http.StatusOK, cart)
+}
+
+// removeItem removes a specific item from a cart
+func removeItem(c *gin.Context) {
+	cartID := parseID(c.Param("cart_id"))
+	productID := c.Param("product_id")
+
+	// Verify cart exists
+	exists, err := cartExists(cartID)
+	if err != nil {
+		log.Printf("Error checking cart existence: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify cart"})
+		return
+	}
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+		return
+	}
+
+	// Delete item
+	result, err := db.Exec(`
+		DELETE FROM cart_items 
+		WHERE cart_id = ? AND product_id = ?`,
+		cartID, productID,
+	)
+	if err != nil {
+		log.Printf("Error removing item: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove item"})
+		return
+	}
+
+	// Check if item was found and deleted
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error checking rows affected: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify deletion"})
+		return
+	}
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "item not found in cart"})
+		return
+	}
+
+	// Fetch updated cart
+	cart, err := fetchCartByID(cartID)
+	if err != nil {
+		log.Printf("Error fetching updated cart: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "item removed but failed to retrieve cart"})
+		return
+	}
+
+	c.JSON(http.StatusOK, cart)
+}
+
+// clearCart removes all items from a cart
+func clearCart(c *gin.Context) {
+	cartID := parseID(c.Param("cart_id"))
+
+	// Verify cart exists
+	exists, err := cartExists(cartID)
+	if err != nil {
+		log.Printf("Error checking cart existence: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify cart"})
+		return
+	}
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+		return
+	}
+
+	// Delete all items from cart
+	_, err = db.Exec(`
+		DELETE FROM cart_items 
+		WHERE cart_id = ?`,
+		cartID,
+	)
+	if err != nil {
+		log.Printf("Error clearing cart: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to clear cart"})
+		return
+	}
+
+	// Fetch updated cart (should have empty items array)
+	cart, err := fetchCartByID(cartID)
+	if err != nil {
+		log.Printf("Error fetching cleared cart: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cart cleared but failed to retrieve"})
+		return
+	}
+
+	c.JSON(http.StatusOK, cart)
+}
+
 // Helper functions
 
+// parseID converts a string ID parameter to integer
 func parseID(idStr string) int {
 	var id int
 	fmt.Sscanf(idStr, "%d", &id)
 	return id
 }
 
+// cartExists checks if a cart with the given ID exists in the database
 func cartExists(cartID int) (bool, error) {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM carts WHERE cart_id = ?)", cartID).Scan(&exists)
 	return exists, err
 }
 
+// fetchCartByID retrieves a complete cart object including all its items
 func fetchCartByID(cartID int) (*Cart, error) {
 	// Fetch cart
 	var cart Cart
