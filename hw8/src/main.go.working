@@ -46,6 +46,7 @@ type UpdateItemRequest struct {
 	Quantity int `json:"quantity" binding:"required,min=1"`
 }
 
+// Global database connection pool - shared across all requests
 var db *sql.DB
 
 func main() {
@@ -62,6 +63,7 @@ func main() {
 		log.Fatalf("Failed to initialize schema: %v", err)
 	}
 
+	// Set up HTTP router using Gin framework
 	router := gin.Default()
 
 	// Health check endpoint
@@ -76,9 +78,6 @@ func main() {
 	router.PUT("/shopping-carts/:cart_id/items/:product_id", updateItem)
 	router.DELETE("/shopping-carts/:cart_id/items/:product_id", removeItem)
 	router.DELETE("/shopping-carts/:cart_id/items", clearCart)
-
-	// Customer history endpoint
-	router.GET("/customers/:customer_id/carts", getCustomerCarts)
 
 	router.Run(":8080")
 }
@@ -141,8 +140,7 @@ func initSchema() error {
 		cart_id INT AUTO_INCREMENT PRIMARY KEY,
 		customer_id VARCHAR(255) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		INDEX idx_customer_id (customer_id),
-		INDEX idx_customer_created (customer_id, created_at DESC)
+		INDEX idx_customer_id (customer_id)
 	) ENGINE=InnoDB;`
 
 	if _, err := db.Exec(createCartsTable); err != nil {
@@ -159,7 +157,6 @@ func initSchema() error {
 		price DECIMAL(10, 2) NOT NULL,
 		FOREIGN KEY (cart_id) REFERENCES carts(cart_id) ON DELETE CASCADE,
 		INDEX idx_cart_id (cart_id),
-		INDEX idx_cart_product (cart_id, product_id),
 		UNIQUE KEY unique_cart_product (cart_id, product_id)
 	) ENGINE=InnoDB;`
 
@@ -167,7 +164,7 @@ func initSchema() error {
 		return fmt.Errorf("error creating cart_items table: %w", err)
 	}
 
-	log.Println("Database schema initialized successfully with optimized indexes")
+	log.Println("Database schema initialized successfully")
 	return nil
 }
 
@@ -241,85 +238,6 @@ func getCart(c *gin.Context) {
 	c.JSON(http.StatusOK, cart)
 }
 
-// getCustomerCarts retrieves all carts for a customer
-func getCustomerCarts(c *gin.Context) {
-	customerID := c.Param("customer_id")
-
-	// Use optimized query with composite index
-	query := `
-		SELECT c.cart_id, c.customer_id, c.created_at,
-		       ci.item_id, ci.product_id, ci.quantity, ci.price
-		FROM carts c
-		LEFT JOIN cart_items ci ON c.cart_id = ci.cart_id
-		WHERE c.customer_id = ?
-		ORDER BY c.created_at DESC, c.cart_id, ci.item_id`
-
-	rows, err := db.Query(query, customerID)
-	if err != nil {
-		log.Printf("Error fetching customer carts: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve customer carts"})
-		return
-	}
-	defer rows.Close()
-
-	// Map to store carts by cart_id
-	cartsMap := make(map[int]*Cart)
-	var cartOrder []int // Preserve order
-
-	for rows.Next() {
-		var cartID int
-		var customerID string
-		var createdAt time.Time
-		var itemID sql.NullInt64
-		var productID sql.NullString
-		var quantity sql.NullInt64
-		var price sql.NullFloat64
-
-		err := rows.Scan(&cartID, &customerID, &createdAt, &itemID, &productID, &quantity, &price)
-		if err != nil {
-			log.Printf("Error scanning row: %v", err)
-			continue
-		}
-
-		// Get or create cart
-		cart, exists := cartsMap[cartID]
-		if !exists {
-			cart = &Cart{
-				CartID:     cartID,
-				CustomerID: customerID,
-				CreatedAt:  createdAt,
-				Items:      []CartItem{},
-			}
-			cartsMap[cartID] = cart
-			cartOrder = append(cartOrder, cartID)
-		}
-
-		// Add item if exists
-		if itemID.Valid {
-			item := CartItem{
-				ItemID:    int(itemID.Int64),
-				CartID:    cartID,
-				ProductID: productID.String,
-				Quantity:  int(quantity.Int64),
-				Price:     price.Float64,
-			}
-			cart.Items = append(cart.Items, item)
-		}
-	}
-
-	// Convert map to ordered slice
-	carts := make([]Cart, 0, len(cartOrder))
-	for _, cartID := range cartOrder {
-		carts = append(carts, *cartsMap[cartID])
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"customer_id": customerID,
-		"cart_count":  len(carts),
-		"carts":       carts,
-	})
-}
-
 // addItems adds or updates items in a cart
 func addItems(c *gin.Context) {
 	cartID := parseID(c.Param("id"))
@@ -336,6 +254,7 @@ func addItems(c *gin.Context) {
 		return
 	}
 
+	// Parse and validate the item data from request body
 	var req AddItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
@@ -343,6 +262,8 @@ func addItems(c *gin.Context) {
 	}
 
 	// Insert or update cart item
+	// ON DUPLICATE KEY UPDATE handles the case where product already exists in cart
+	// The UNIQUE constraint on (cart_id, product_id) triggers this behavior
 	_, err = db.Exec(`
 		INSERT INTO cart_items (cart_id, product_id, quantity, price)
 		VALUES (?, ?, ?, ?)
@@ -384,6 +305,7 @@ func updateItem(c *gin.Context) {
 		return
 	}
 
+	// Parse new quantity from request body
 	var req UpdateItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
@@ -519,73 +441,53 @@ func clearCart(c *gin.Context) {
 
 // Helper functions
 
+// parseID converts a string ID parameter to integer
 func parseID(idStr string) int {
 	var id int
 	fmt.Sscanf(idStr, "%d", &id)
 	return id
 }
 
+// cartExists checks if a cart with the given ID exists in the database
 func cartExists(cartID int) (bool, error) {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM carts WHERE cart_id = ?)", cartID).Scan(&exists)
 	return exists, err
 }
 
-// OPTIMIZED: fetchCartByID uses single JOIN query instead of N+1
+// fetchCartByID retrieves a complete cart object including all its items
 func fetchCartByID(cartID int) (*Cart, error) {
-	query := `
-		SELECT c.cart_id, c.customer_id, c.created_at,
-		       ci.item_id, ci.product_id, ci.quantity, ci.price
-		FROM carts c
-		LEFT JOIN cart_items ci ON c.cart_id = ci.cart_id
-		WHERE c.cart_id = ?
-		ORDER BY ci.item_id`
+	// Fetch cart
+	var cart Cart
+	err := db.QueryRow(
+		"SELECT cart_id, customer_id, created_at FROM carts WHERE cart_id = ?",
+		cartID,
+	).Scan(&cart.CartID, &cart.CustomerID, &cart.CreatedAt)
 
-	rows, err := db.Query(query, cartID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch cart items
+	rows, err := db.Query(`
+		SELECT item_id, cart_id, product_id, quantity, price
+		FROM cart_items
+		WHERE cart_id = ?`,
+		cartID,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var cart *Cart
+	cart.Items = []CartItem{}
 	for rows.Next() {
-		var itemID sql.NullInt64
-		var productID sql.NullString
-		var quantity sql.NullInt64
-		var price sql.NullFloat64
-
-		if cart == nil {
-			cart = &Cart{Items: []CartItem{}}
-			err = rows.Scan(&cart.CartID, &cart.CustomerID, &cart.CreatedAt,
-				&itemID, &productID, &quantity, &price)
-		} else {
-			var tempCartID int
-			var tempCustomerID string
-			var tempCreatedAt time.Time
-			err = rows.Scan(&tempCartID, &tempCustomerID, &tempCreatedAt,
-				&itemID, &productID, &quantity, &price)
-		}
-
-		if err != nil {
+		var item CartItem
+		if err := rows.Scan(&item.ItemID, &item.CartID, &item.ProductID, &item.Quantity, &item.Price); err != nil {
 			return nil, err
 		}
-
-		// Add item if it exists
-		if itemID.Valid {
-			item := CartItem{
-				ItemID:    int(itemID.Int64),
-				CartID:    cart.CartID,
-				ProductID: productID.String,
-				Quantity:  int(quantity.Int64),
-				Price:     price.Float64,
-			}
-			cart.Items = append(cart.Items, item)
-		}
+		cart.Items = append(cart.Items, item)
 	}
 
-	if cart == nil {
-		return nil, sql.ErrNoRows
-	}
-
-	return cart, nil
+	return &cart, nil
 }

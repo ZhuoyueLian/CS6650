@@ -30,10 +30,23 @@
 - Added idx_customer_id for customer history queries
 - Added idx_cart_id on cart_items for JOIN performance
 
+**Key Strategy:**
+- **Primary Keys**: AUTO_INCREMENT integers (cart_id, item_id) for performance
+- **Foreign Keys**: cart_id in cart_items references carts(cart_id)
+- **Constraints**: ON DELETE CASCADE automatically removes orphaned items
+- **Unique Constraint**: (cart_id, product_id) prevents duplicate products per cart
+
 **Transaction Design:**
-- Used InnoDB engine for ACID compliance
-- Connection pooling (25 max, 5 idle) for concurrent access
-- Handles concurrent cart modifications through MySQL locking
+- **Engine**: InnoDB for ACID compliance and row-level locking
+- **Isolation Level**: REPEATABLE READ (MySQL default)
+  - Prevents dirty reads and non-repeatable reads
+  - Uses gap locking to prevent phantom reads
+- **Concurrent Scenarios**:
+  - Multiple users modifying different carts: No conflicts (different rows)
+  - Same user adding items from different sessions: Row-level locks serialize access
+  - Cart deletion while adding items: Foreign key constraint prevents orphans
+- **Connection Pooling**: 25 max connections prevent resource exhaustion
+- **Lock Duration**: Minimal - only during actual UPDATE/INSERT operations
 
 ## Schema Design Trade-offs and Considerations
 
@@ -85,12 +98,18 @@
 - Foreign key constraints maintained data integrity automatically
 - ECS environment variables made DB configuration simple
 
-### Challenges Encountered:
+### Issues Discovered:
 1. **Initial Issue**: MySQL version 8.0.35 not available in us-west-2
    - **Solution**: Updated to 8.0.39 after checking available versions
 
-2. **Missing go.sum**: Docker build failed without dependency checksums
-   - **Solution**: Ran `go mod tidy` to generate go.sum
+2. **Initial N+1 Query Problem**: 
+   - First implementation used separate queries for cart + items
+   - Response times were above requirement
+   - **Solution**: Implemented single JOIN query reducing to 40-45ms   
+
+3. **Foreign Key Constraint Violations**:
+   - Error: Adding items to non-existent carts
+   - Solution: Added cart existence check before item operations
 
 ### Key Learnings:
 - RDS takes 5-8 minutes to provision (plan accordingly)
