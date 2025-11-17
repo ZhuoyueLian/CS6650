@@ -1,0 +1,38 @@
+
+========================================
+Load Test Results
+========================================
+Total Duration: 1m12.298684293s
+Total Requests: 10000
+
+Cart Operations:
+  Created: 9852
+  Failed: 148
+
+Item Operations:
+  Successful: 19662
+  Failed: 27
+
+Checkout Operations:
+  Successful: 9813
+  Failed: 12
+  Authorized: 8790 (89.6%)
+  Declined: 1023 (10.4%)
+
+Throughput:
+  Checkouts/sec: 135.73
+
+Checkout Latencies:
+  Average: 57.608345ms
+  P50: 59.768341ms
+  P95: 98.460478ms
+  P99: 143.446375ms
+  Max: 626.195625ms
+
+Add Items Latencies:
+  Average: 89.678904ms
+  P50: 85.660251ms
+  P95: 139.452316ms
+  P99: 211.197227ms
+  Max: 3.255393747s
+========================================
