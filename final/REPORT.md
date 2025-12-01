@@ -1,7 +1,7 @@
 # LocalStack vs AWS: Comparative Analysis of Event-Driven Order Processing Pipeline
 
 **Author:** Zhuoyue Lian  
-**Repository:** [GitHub Link ]
+**Repository:** https://github.com/ZhuoyueLian/CS6650/tree/71ad6e792804ccbd6b23e4aead96b29cc3c490bd/final
 
 ---
 
@@ -499,7 +499,7 @@ final/
 - **Testing:** Custom shell scripts, curl for load generation
 - **Monitoring:** CloudWatch Logs (AWS), stdout/file logs (LocalStack)
 
-**Repository:** [Add your GitHub URL here]
+**Repository:** https://github.com/ZhuoyueLian/CS6650/tree/71ad6e792804ccbd6b23e4aead96b29cc3c490bd/final
 
 ---
 
